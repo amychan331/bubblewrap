@@ -1,59 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
-
-body {
-    background-color: #FCF9EF;
-}
-
-svg {
-    float: left;
-    position: relative;
-}
-
-.links line {
-    stroke: #999;
-    stroke-opacity: 0.6;
-}
-
-.nodes circle {
-    stroke: #fff;
-    stroke-width: 1.5px;
-}
-
-.nodes text {
-    pointer-events: none;
-    color: #463E3F;
-}
-
-#artist #inner {
-    border: 2px solid gray;
-    color: #CC7000;
-    float: right;
-    font-size: 1em;
-    min-height: 125px;
-    margin-right: 3%;
-    margin-top: 3%;
-    padding: 1%;
-    position: relative;
-    width: 25%;
-    vertical-align: middle;
-}
-
-#artist #inner button {
-    background-color: white;
-    border: 1px solid #CC7000;
-    color: #CC7000;
-    float: right;
-}
-
-#artist #inner button:hover {
-    background-color: #efd4b2;
-    border: 2px solid #3d2100;
-    color: #3d2100;
-}
-
-</style>
+<link rel="stylesheet" type="text/css" href="stylesheet.css">
 <svg width="800" height="800" font-size=".75em" text-anchor="middle" ></svg>
 <div id="artist"></div>
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -62,7 +9,7 @@ svg {
 function drawGraph(artist=undefined) {
     var svg = d3.select("svg"),
         width = +svg.attr("width"),
-        height = artist ? +svg.attr("height")/1.5 : +svg.attr("height");
+        height = artist ? +svg.attr("height")/1.25 : +svg.attr("height");
 
     var color = d3.scaleOrdinal(d3.schemeCategory20);
 

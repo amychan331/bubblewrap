@@ -1,0 +1,53 @@
+body {
+    background-color: #FCF9EF;
+}
+
+svg {
+    float: left;
+    font-family: Tahoma, Verdana,  Arial;
+    font-weight: bold;
+    position: relative;
+}
+
+.links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+}
+
+.nodes circle {
+    opacity: .75;
+    stroke: #fff;
+    stroke-width: 1.5px;
+}
+
+.nodes text {
+    color: #463E3F;
+    pointer-events: none;
+}
+
+#artist #inner {
+    border: 2px solid gray;
+    color: #CC7000;
+    float: right;
+    font-size: 1em;
+    min-height: 125px;
+    margin-right: 3%;
+    margin-top: 3%;
+    padding: 1%;
+    position: relative;
+    width: 25%;
+    vertical-align: middle;
+}
+
+#artist #inner button {
+    background-color: white;
+    border: 1px solid #CC7000;
+    color: #CC7000;
+    float: right;
+}
+
+#artist #inner button:hover {
+    background-color: #efd4b2;
+    border: 2px solid #3d2100;
+    color: #3d2100;
+}
