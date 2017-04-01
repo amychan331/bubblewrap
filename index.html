@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+    background-color: #FCF9EF;
+}
+
+svg {
+    float: left;
+    position: relative;
+}
+
+.links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+}
+
+.nodes circle {
+    stroke: #fff;
+    stroke-width: 1.5px;
+}
+
+.nodes text {
+    pointer-events: none;
+    color: #463E3F;
+}
+
+#artist #inner {
+    border: 2px solid gray;
+    color: #CC7000;
+    float: right;
+    height: auto;
+    margin-right: 3%;
+    margin-top: 3%;
+    padding: 1%;
+    position: relative;
+    width: 25%;
+}
+
+</style>
+<svg width="800" height="800" font-size=".75em" text-anchor="middle" ></svg>
+<div id="artist"></div>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+function drawGraph(artist=undefined) {
+    var svg = d3.select("svg"),
+        width = +svg.attr("width"),
+        height = +svg.attr("height");
+
+    var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+    var simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(function(d) { return d.name; }))
+        .force("charge", d3.forceManyBody())
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    d3.json("correspondence.json", function(error, graph) {
+        if (error) throw error;
+
+        var link = svg.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(graph.links
+                .filter(function(d) {
+                    if(artist) {
+                        console.log(artist);
+                        console.log(d.name);
+                        return artist == d.name;
+                    } else {
+                        return true;
+                    }
+                })
+            )
+            .enter().append("line")
+            .attr("stroke-width", function(d) { return Math.sqrt(d.shared_email) * 1.5; });
+
+        var node = svg.append("g")
+            .attr("class", "nodes")
+            .selectAll("circle")
+            .data(graph.nodes)
+            .enter().append("circle")
+            .filter(function(d) {
+                if(artist) {
+                    return artist == d.source;
+                } else {
+                    return true;
+                }
+            })
+            // # of subject element, times 10 (for readability), determines both size & color
+            .attr("r", function(d) { return d.subject.length ? d.subject.length * 10 : 10 })
+            .attr("fill", function(d) { return color(d.subject.length ? d.subject.length * 10 : 10 ); })
+            // add attributes for click-and-filter feature
+            .attr("name", function(d) { return d.name })
+            .attr("onclick", "filterArtist(this)")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended)
+            );
+
+        var gnodes = svg.append("g")
+            .attr("class", "gnodes")
+            .selectAll("gnode")
+            .data(graph.nodes)
+            .enter()
+            .filter(function(d) {
+                if(artist) {
+                    return artist == d.name;
+                } else {
+                    return true;
+                }
+            })
+            .append('g')
+            .classed('gnode', true);
+
+        var labels = gnodes.append("text")
+          .text(function(d) { return d.name; });
+
+        node.append("title")
+            .text(function(d) { return d.name; });
+
+        simulation
+            .nodes(graph.nodes)
+            .on("tick", ticked);
+
+        simulation.force("link")
+            .links(graph.links)
+            .distance(300);
+
+        function ticked() {
+            link
+                .attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; })
+
+            node
+                .attr("cx", function(d) { return d.x; })
+                .attr("cy", function(d) { return d.y; })
+
+            gnodes
+                .attr("transform", function(d) {
+                    return 'translate(' + [d.x, d.y] + ')';
+                });
+        }
+    });
+}
+
+drawGraph();
+
+function dragstarted(d) {
+    if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+}
+
+function dragged(d) {
+    d.fx = d3.event.x;
+    d.fy = d3.event.y;
+}
+
+function dragended(d) {
+    if (!d3.event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+}
+
+function filterArtist(e){
+    // e is the <circle> SVG element, so use .getAttribute to query.
+    name = e.getAttribute("name");
+    document.getElementById('artist').innerHTML =
+        "<div id='inner'>" +
+            "<p>Name: " + name + "</p>" +
+        "</div>";
+
+    d3.select("svg").selectAll(".nodes").remove();
+    d3.select("svg").selectAll(".links").remove();
+    d3.select("svg").selectAll(".gnodes").remove();
+    drawGraph(name);
+}
+
+</script>
