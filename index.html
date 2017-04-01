@@ -62,17 +62,16 @@ function drawGraph(artist=undefined) {
         var link = svg.append("g")
             .attr("class", "links")
             .selectAll("line")
-            .data(graph.links
-                .filter(function(d) {
-                    if(artist) {
-                        console.log(artist);
-                        console.log(d.name);
-                        return artist == d.name;
-                    } else {
-                        return true;
-                    }
-                })
-            )
+            .data(graph.links)
+            .filter(function(d) {
+                if(artist) {
+                    console.log(artist);
+                    console.log(d.name);
+                    return artist == d.name;
+                } else {
+                    return d.name;
+                }
+            })
             .enter().append("line")
             .attr("stroke-width", function(d) { return Math.sqrt(d.shared_email) * 1.5; });
 

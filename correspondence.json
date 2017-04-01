@@ -76,6 +76,7 @@
     {"name": "Child1", "subject": 10},
     {"name": "Child2", "subject": 10},
     {"name": "Brujon", "subject": 4},
+    {"name": "Mme.Hucheloup", "subject": 8}
   ],
   "links": [
     {"source": "Napoleon", "target": "Myriel", "shared_email": 1},
@@ -325,5 +326,12 @@
     {"source": "Brujon", "target": "Eponine", "shared_email": 1},
     {"source": "Brujon", "target": "Claquesous", "shared_email": 1},
     {"source": "Brujon", "target": "Montparnasse", "shared_email": 1},
+    {"source": "Mme.Hucheloup", "target": "Bossuet", "shared_email": 1},
+    {"source": "Mme.Hucheloup", "target": "Joly", "shared_email": 1},
+    {"source": "Mme.Hucheloup", "target": "Grantaire", "shared_email": 1},
+    {"source": "Mme.Hucheloup", "target": "Bahorel", "shared_email": 1},
+    {"source": "Mme.Hucheloup", "target": "Courfeyrac", "shared_email": 1},
+    {"source": "Mme.Hucheloup", "target": "Gavroche", "shared_email": 1},
+    {"source": "Mme.Hucheloup", "target": "Enjolras", "shared_email": 1}
   ]
 }
