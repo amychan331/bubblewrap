@@ -59,34 +59,38 @@ function drawGraph(artist=undefined) {
     d3.json("correspondence.json", function(error, graph) {
         if (error) throw error;
 
+        var contact = [];
+
         var link = svg.append("g")
             .attr("class", "links")
             .selectAll("line")
-            .data(graph.links)
-            .filter(function(d) {
-                if(artist) {
-                    console.log(artist);
-                    console.log(d.name);
-                    return artist == d.name;
-                } else {
-                    return d.name;
-                }
-            })
+            .data(graph.links
+                .filter(function(d) {
+                    if(artist) {
+                        if (d.source == artist) { return true };
+                        if (d.target == artist) { contact.push(d.source); return true; };
+                    } else {
+                        return true;
+                    }
+                })
+            )
             .enter().append("line")
             .attr("stroke-width", function(d) { return Math.sqrt(d.shared_email) * 1.5; });
 
         var node = svg.append("g")
             .attr("class", "nodes")
             .selectAll("circle")
-            .data(graph.nodes)
+            .data(graph.nodes
+                .filter(function(d) {
+                    if(artist) {
+                        if (d.name == artist) { return true };
+                        return contact.includes(d.name);
+                    } else {
+                        return true;
+                    }
+                })
+            )
             .enter().append("circle")
-            .filter(function(d) {
-                if(artist) {
-                    return artist == d.source;
-                } else {
-                    return true;
-                }
-            })
             // # of subject element, times 10 (for readability), determines both size & color
             .attr("r", function(d) { return d.subject.length ? d.subject.length * 10 : 10 })
             .attr("fill", function(d) { return color(d.subject.length ? d.subject.length * 10 : 10 ); })
@@ -102,16 +106,17 @@ function drawGraph(artist=undefined) {
         var gnodes = svg.append("g")
             .attr("class", "gnodes")
             .selectAll("gnode")
-            .data(graph.nodes)
-            .enter()
-            .filter(function(d) {
-                if(artist) {
-                    return artist == d.name;
-                } else {
-                    return true;
-                }
-            })
-            .append('g')
+            .data(graph.nodes
+                .filter(function(d) {
+                    if(artist) {
+                        if (d.name == artist) { return true };
+                        return contact.includes(d.name);
+                    } else {
+                        return true;
+                    }
+                })
+            )
+            .enter().append('g')
             .classed('gnode', true);
 
         var labels = gnodes.append("text")
