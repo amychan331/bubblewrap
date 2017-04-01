@@ -30,12 +30,27 @@ svg {
     border: 2px solid gray;
     color: #CC7000;
     float: right;
-    height: auto;
+    font-size: 1em;
+    min-height: 125px;
     margin-right: 3%;
     margin-top: 3%;
     padding: 1%;
     position: relative;
     width: 25%;
+    vertical-align: middle;
+}
+
+#artist #inner button {
+    background-color: white;
+    border: 1px solid #CC7000;
+    color: #CC7000;
+    float: right;
+}
+
+#artist #inner button:hover {
+    background-color: #efd4b2;
+    border: 2px solid #3d2100;
+    color: #3d2100;
 }
 
 </style>
@@ -84,7 +99,6 @@ function drawGraph(artist=undefined) {
                 .filter(function(d) {
                     if(artist) {
                         if (d.name == artist) { return true };
-                        console.log(contact);
                         return contact.includes(d.name);
                     } else {
                         return true;
@@ -173,6 +187,14 @@ function dragended(d) {
     d.fy = null;
 }
 
+function reset() {
+    d3.select("svg").selectAll(".nodes").remove();
+    d3.select("svg").selectAll(".links").remove();
+    d3.select("svg").selectAll(".gnodes").remove();
+    document.getElementById("inner").remove();
+    drawGraph();
+}
+
 function filterArtist(e){
     // e is the <circle> SVG element, so use .getAttribute to query.
     name = e.getAttribute("name");
@@ -181,6 +203,7 @@ function filterArtist(e){
         "<div id='inner'>" +
             "<p>Name: " + name + "</p>" +
             "<p>Artwork: " + title + "</p>" +
+            "<button onclick='reset()'>Reset</button>"
         "</div>";
 
     d3.select("svg").selectAll(".nodes").remove();
