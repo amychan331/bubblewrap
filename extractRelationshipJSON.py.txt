@@ -1,0 +1,329 @@
+#!/usr/bin/python
+
+import nltk
+from nltk.corpus import stopwords
+import re
+
+import json
+pythonDictionary = {'name':'Bob', 'age':44, 'isEmployed':True}
+dictionaryToJson = json.dumps(pythonDictionary)
+
+class InputReadAndProcess(object):
+
+	def __init__(self):
+		#print("hello")
+		self.inp = ""
+		self.content = []
+		self.headers_list = []
+		self.from_to_data = []
+		self.subjects_set = set()
+		self.subjects_list = {}
+		self.subjects_array = []
+		self.nodes_array = []
+		self.nodes_set = set()
+		self.nodes_dict = {} #name --> subject array
+		self.target_source_dict = {}
+		self.json_links = []
+		
+		
+		
+	def get_relationship_links_json(self):
+		#print("get_relationship_links_json")
+		#print()
+		#print()
+		for h in self.headers_list:
+			source = self.get_source(h)
+			#print("source")
+			#print(source)
+			all_targets = self.get_all_targets(h)
+			#print("all_targets")
+			#print(all_targets)
+			target_source_pairs = self.get_target_source_pairs(all_targets, source)
+			#print("target_source_pairs")
+			#print(target_source_pairs)			
+			for pair in target_source_pairs:
+				if pair in self.target_source_dict:
+					self.target_source_dict[pair] += 1
+				else:
+					self.target_source_dict[pair] = 1
+		#print("target_source_dict")
+
+		#print(self.target_source_dict)
+		self.json_links = self.getLinksJson()
+		return self.json_links
+		#self.target_source_dict
+			
+				
+
+	def getLinksJson(self):
+		#self.target_source_dict
+		#print("Link JSON start")
+		nodes_json = []
+		for node in self.target_source_dict:
+			#print(node)
+			new_dict = {}
+			src_trgt = node.split(";");
+			if len(src_trgt) != 2:
+				print("nodu")
+			else:
+				
+				target = src_trgt[0].split("[")
+				tgt = target[0].split("(")				
+				new_dict["target"] = tgt[0]
+				#new_dict["source"] = src_trgt[1]
+				source = src_trgt[0].split("[")
+				src = source[0].split("(")	
+				new_dict["source"] = src[0]								
+				new_dict["shared_email"] = self.target_source_dict[node]				
+				nodes_json.append(new_dict)
+		#print(nodes_json)
+		return nodes_json
+	
+					
+	def get_target_source_pairs(self, all_targets, source):
+		all_pairs = []
+		for target in all_targets:
+			pair = target + ";" + source					
+			all_pairs.append(pair);
+
+		return all_pairs
+
+	def get_source(self, header):
+		node = ""
+		for h in header:
+			h = h.lower()
+			if h.startswith('from: '):
+				temp = h.strip()
+				first_part = temp.split('[')
+				nodes_part = first_part[0].strip().split(':')
+				#nodes_part = temp.split(':')
+				node = nodes_part[1].strip()
+		return node	
+		
+	def get_all_targets(self, header):
+		for h in header:
+			h = h.strip().lower()
+			if h.startswith('to: ') or h.startswith('cc: ') or h.startswith('bcc: '):
+				#print("inside to CC, BCC")
+				h = h.strip()
+				temp = h.split(',')
+				if h.startswith('CC: ') or h.startswith('BCC: '):
+					print("CC/BCC")
+					#print(temp)
+				if ":" in temp[0]:
+					tmp = temp[0].split(':')
+					temp[0] = tmp[1]
+				i = 0
+				for node in temp:
+					node = node.strip()
+					if node != "":
+						temp[i] = node
+						i += 1
+			
+		return temp		
+			
+
+
+	def get_relationship_nodes_json(self):
+		#self.headers_list
+		
+		
+		for h in self.headers_list:
+			current_sub = self.get_subject(h)
+			#print("Curr Sub")
+			#print(current_sub)
+			if current_sub not in self.subjects_set:
+				self.subjects_set.add(current_sub)
+				self.subjects_array.append(current_sub)
+				self.subjects_list[current_sub] =  len(self.subjects_array) - 1
+			#print("subjects_list")
+			#print(self.subjects_list)
+			current_nodes = self.get_nodes(h)
+			#print("current_nodes")
+			#print(current_nodes)
+			for node in current_nodes:
+
+								
+				subj_arr_tmp = []
+				if node in self.nodes_set:
+					 #get value(sub array) nodes_dict[node]
+					 subj_arr_tmp = self.nodes_dict[node]
+					 #print("Wanted lop After extracting sub array")
+					 #print(subj_arr_tmp)
+					 sub_id = self.subjects_list[current_sub]
+					 for s in subj_arr_tmp:
+					 	if sub_id == s:
+					 		print("")#match found do nothing
+					 	else:
+					 		sub_id = self.subjects_list[current_sub]
+					 		subj_arr_tmp.append(sub_id)
+					 		self.nodes_dict[node] = subj_arr_tmp
+				else:
+					self.nodes_set.add(node)
+					self.nodes_array.append(node)					
+					#adds node and subject
+					sub_id = self.subjects_list[current_sub]
+					subj_arr_tmp.append(sub_id)
+					self.nodes_dict[node] = subj_arr_tmp
+					 
+				#print("self.nodes_dict")
+				#print(self.nodes_dict)
+				
+		return self.getJsonForDict()#self.nodes_dict
+		
+			
+	def getJsonForDict(self):
+		#self.nodes_dict
+		#print("JSON start")
+		nodes_json = []
+		for node in self.nodes_dict:
+			#print(node)
+			new_dict = {}
+
+
+
+			'''subject = self.nodes_dict[node].split("[")
+			sbjt = subject[0].split("(")	
+			#new_dict["subject"] = self.nodes_dict[node]
+			new_dict["subject"] = sbjt[0]
+			'''
+			new_dict["subject"] = self.nodes_dict[node]
+			'''
+			name = node.split("[")
+			nme = name[0].split("(")	
+			#new_dict["name"] = node
+			new_dict["name"] = nme[0]
+			'''
+			new_dict["name"] = self.nodes_dict[node]			
+
+			nodes_json.append(new_dict)
+		#print(nodes_json)
+		return nodes_json
+			
+		
+	def get_nodes(self, header):
+		nodes = []
+		node_set = set()
+		
+		for h in header:
+			h = h.lower()
+			#print("Curr Header")
+			#print(h)
+			if h.startswith('from: '):
+				#print("inside From Loop")
+				temp = h.strip()
+				first_part = temp.split('[')
+				nodes_part = first_part[0].strip().split(':')
+				#nodes_part = temp.split(':')
+				node = nodes_part[1].strip()
+				#print("node = ")
+				#print(node)
+				if node not in node_set:
+					nodes.append(node)
+					node_set.add(node)
+				
+			if h.startswith('to: ') or h.startswith('cc: ') or h.startswith('bcc: '):
+				#print("inside to CC, BCC")
+				h = h.strip()
+				temp = h.split(',')
+				#if h.startswith('CC: ') or h.startswith('BCC: '):
+					#print("CC/BCC")
+					#print(temp)
+				if ":" in temp[0]:
+					tmp = temp[0].split(':')
+					temp[0] = tmp[1]
+				for node in temp:
+					node = node.strip()
+					if node not in node_set and node != "": 
+						nodes.append(node)
+						node_set.add(node)	
+			#print("Nodes look like")	
+	
+			#print(nodes)
+			#print()		
+		return nodes					
+				
+				
+
+	def get_subject(self, header):
+		current_sub = []
+		for h in header:
+			if h.startswith('Subject: '):
+				current_sub = h.split(':') #Assuming no other semi colons. Or start after 9 spaces.	
+		
+		if len(current_sub) > 2:
+			return current_sub[2].strip()	
+		return current_sub[1].strip()
+		
+	def extract_header_and_content(self):
+		
+		#import unicode from unicode 
+		import fileinput
+		content_read = False
+		header_read = False
+		header_data = []
+		for line in fileinput.input():
+			#if line.contains(
+			self.inp += line #.encode('ISO-8859-1').decode('ascii','ignore')
+				
+			if line.startswith('From: '):
+				header_read = True	
+				header_data = []
+				content_read = False			
+			#if line.startswith "Subject: " or "From: " or line.startswith "Sent: " or line.startswith "To: " or line.startswith "CC: " or line.startswith "BCC: ":
+			if header_read == True:
+				header_data.append(line)	
+				self.from_to_data.append(line)
+
+			if content_read == True:
+				self.content.append(line)				
+					
+			if line.startswith('Subject: '):
+				header_read = False
+				
+				self.headers_list.append(header_data)#append/add--> need to check
+				content_read = True
+		#print("Content")					
+		#for c in self.content:
+			#print(c)
+			
+		#print("Headers")
+		#for h in self.headers_list:
+			#print(h)					
+
+
+	def get_final_json(self, nodes_json, links_json):
+		final_json = {}
+		final_json["nodes"] = nodes_json
+		final_json["links"] = links_json
+		return final_json
+			
+ 
+
+		
+class Execution(object):
+
+	def __init(self):
+		print("hi")
+		
+	def run(self):
+		obj = InputReadAndProcess()
+		obj.extract_header_and_content() 
+		nodes_json = obj.get_relationship_nodes_json()
+		links_json = obj.get_relationship_links_json()
+		final_json = obj.get_final_json(nodes_json, links_json)
+		print("Relationship JSON")
+		
+		print(final_json)
+
+		
+
+		
+
+def main():
+
+
+	ob = Execution()
+	ob.run()
+
+main()

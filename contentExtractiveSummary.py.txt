@@ -1,0 +1,204 @@
+#!/usr/bin/python
+
+import nltk
+from nltk.corpus import stopwords
+import re
+
+class InputReadAndProcess(object):
+
+	def __init__(self):
+		#print("hello")
+		self.inp = ""
+		self.inp_sents = []
+		self.numOfWords_Input = 0
+		self.max_summary_len = 0
+		self.sent_cont_words = []
+		self.word_cnt = {}
+		self.content_word_prob = {}
+		self.avg_word_prob_in_sents = {}
+		self.cue_words = ['to summarize', 'in sum', 'in brief', 'to sum up', 'in short', 'in summary', 
+						'the paper describes', 'describe', 'our investigations', 'bottom line', 'as can be seen', 
+						'in the final analysis', 'all things considered', 'as shown above', 'given these points', 
+						'as has been noted', 'in a word', 'in conclusion', 'in essence', 'on the whole', 
+						'all in all', 'Thus','Therefore']
+
+	
+	def read_input(self):
+		
+		#import unicode from unicode 
+		import fileinput
+		for line in fileinput.input():
+			#print(unidecode(line))
+			self.inp += line #.encode('ISO-8859-1').decode('ascii','ignore')
+		#print(self.inp)
+	
+	def get_sentences(self):
+		#.replace('\u201C', '"').replace('\u201D','"')
+		self.inp = self.inp.replace('\u201C', '"').replace('\u201D','"').replace('\u002C', ',').replace('\u2018','\'').replace('\u2019', '\'').replace('?"', '? "').replace('!"', '! "').replace('."', '. "').replace('"*', '" ')
+		self.inp_sents = nltk.sent_tokenize(self.inp)
+		'''for sent in self.inp_sents:
+			print(sent)
+		print(len(self.inp_sents))'''
+	
+		
+	def get_content(self):
+		stopwords = nltk.corpus.stopwords.words('english')
+		for sent in self.inp_sents:
+			sent = re.sub(r'[^\w\s]','',sent)
+			tokens = nltk.word_tokenize(sent)
+			self.numOfWords_Input += len(tokens)
+			#print("tokens",tokens)
+			content = []
+			for token in tokens:
+				token = token.lower()
+				if token not in stopwords:
+					content.append(token)
+					if (self.word_cnt).__contains__(token) == True:
+						self.word_cnt[token] += 1
+					else:
+						self.word_cnt[token] = 1
+			self.sent_cont_words.append(content)
+		#print("Total Words in input = ", self.numOfWords_Input)
+		#print("printing content")
+		#print(self.sent_cont_words)
+		#print("size= ",len(self.sent_cont_words))
+		#print("word_cnt.items(): ",  self.word_cnt.items())
+		#print("size= ",len(self.word_cnt))
+	
+	def init_cue_words(self):
+		cue_words = ['to summarize', 'in sum', 'in brief', 'to sum up', 'in short', 'in summary', 'the paper describes', 'describe', 'our investigations']
+		for w in cue_words:
+			self.cue_words.add(w)
+		#print("Cue-words", self.cue_words)
+		
+	def calc_probability_distribution_over_words(self):
+		numOfContentWords = len(self.word_cnt)
+		for word in self.word_cnt:
+			self.content_word_prob[word] = float(self.word_cnt[word]/numOfContentWords)
+		#print("content word probabilities: ", self.content_word_prob.items())	
+
+	def check_for_cue_word(self,i):
+		str1 = self.inp_sents[i]
+		for w in self.cue_words:
+			if w in str1:
+				return True
+		return False
+		
+		
+	def calc_avg_probability_of_words_in_all_sentences(self):
+
+		numOfSentences = len(self.inp_sents)
+		location_priority_block_size = int(numOfSentences/2)
+		print("loc priority block size = ", location_priority_block_size) 
+		#considering 10% of sentences at the start and 10% sentences at the end.
+		i=0
+		for contentWords in self.sent_cont_words:
+			avgProb = 0
+			numOfContentWords = len(contentWords)
+			for contentWord in contentWords:
+				avgProb += float(self.content_word_prob[contentWord]/numOfContentWords)
+				
+			
+			#check for cue words and increase prob
+			cue_word_status = self.check_for_cue_word(i)
+			if cue_word_status == True:
+				#increase prob by 50 percent new prob = 1.5 times old prob
+				avgProb += float(avgProb/2)
+			#check for location of sentences and increase prob
+			if i < location_priority_block_size or i > (numOfSentences -1 -location_priority_block_size):
+				#increase probability by 20% new prob = 1.2 times old prob
+				if i == 0:
+					avgProb = float(1.0+avgProb)
+				else:
+					#news article. So first sentence might be headline--> double the prob
+					avgProb += float(avgProb/5)
+			self.avg_word_prob_in_sents[i]= float(avgProb)
+			i +=1
+
+		#print("s(i) \n",self.avg_word_prob_in_sents)
+		
+		
+	def key_with_max_val(self,d):
+
+		v=list(d.values())
+		#k=list(d.keys())
+		return max(v), v.index(max(v)) 
+	
+	def key_with_least_val(self, d):
+		v=list(d.values())
+		k=list(d.keys())
+		i = v.index(min(v))
+		return k[i], i 
+	
+	
+	def pick_line_for_summary(self, sents_probabilities, summary_len, summary_sent_hashmap):
+		if summary_len > self.max_summary_len:
+			#done
+			
+			summary_sents =""
+			while len(summary_sent_hashmap) > 0 :
+				
+				s, i = self.key_with_least_val(summary_sent_hashmap)
+				summary_sents += s + " "
+				del summary_sent_hashmap[s]
+				#print("lenth of sumsents =", len(summary_sent_hashmap), "sent = ", s)
+			print("Summary: ")
+			print(summary_sents)
+
+		else:
+			#pick next sentence for summary
+			prob, sent_index = self.key_with_max_val(sents_probabilities)
+			sents_probabilities[sent_index] = 0
+			selected_sent = self.inp_sents[sent_index].replace('\n', ' ').replace('\r', '')
+			#summary_sents += " "+selected_sent
+			summary_sent_hashmap[selected_sent] = sent_index
+			#print("selected sentence : ", selected_sent, "probability= ", prob , "index= ", sent_index, "length of summary= ", summary_len)
+			sent = re.sub(r'[^\w\s]','',selected_sent)
+			tokens = nltk.word_tokenize(sent)
+			summary_len += len(tokens)
+			self.pick_line_for_summary(sents_probabilities, summary_len, summary_sent_hashmap)
+			
+		
+	
+	def generate_summary(self):
+		#print("Starting to generate summary")
+		summary_sent_hashmap = {}
+		summary_len = 0
+		self.max_summary_len = int(self.numOfWords_Input/4);
+		#print("Maximum summary Length= ", self.max_summary_len)
+		sents_probabilities = {}
+		for i in range(0,len(self.avg_word_prob_in_sents)):
+			if i == 0:
+			#Probability increase for Location of sentence = 1st sentence increase probability 
+				sents_probabilities[i] = float(self.avg_word_prob_in_sents[i] + 1)
+			sents_probabilities[i] = float(self.avg_word_prob_in_sents[i])
+		summary_sents = ""
+		'''sent = re.sub(r'[^\w\s]','',summary_sents)
+		tokens = nltk.word_tokenize(sent)
+		summary_len += len(tokens)'''
+		self.pick_line_for_summary(sents_probabilities, summary_len, summary_sent_hashmap)
+
+			
+		
+		
+class Execution(object):
+
+	def __init(self):
+		print("hi")
+		
+	def run(self):
+		obj = InputReadAndProcess()
+		obj.read_input() 
+		obj.get_sentences()
+		obj.get_content()
+		obj.calc_probability_distribution_over_words()
+		obj.calc_avg_probability_of_words_in_all_sentences()
+		obj.generate_summary()
+		
+
+def main():
+
+	ob = Execution()
+	ob.run()
+
+main()
