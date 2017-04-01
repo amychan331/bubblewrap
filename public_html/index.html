@@ -47,7 +47,7 @@ svg {
 function drawGraph(artist=undefined) {
     var svg = d3.select("svg"),
         width = +svg.attr("width"),
-        height = +svg.attr("height");
+        height = artist ? +svg.attr("height")/1.5 : +svg.attr("height");
 
     var color = d3.scaleOrdinal(d3.schemeCategory20);
 
@@ -67,7 +67,7 @@ function drawGraph(artist=undefined) {
             .data(graph.links
                 .filter(function(d) {
                     if(artist) {
-                        if (d.source == artist) { return true };
+                        if (d.source == artist) { contact.push(d.target); return true };
                         if (d.target == artist) { contact.push(d.source); return true; };
                     } else {
                         return true;
@@ -84,6 +84,7 @@ function drawGraph(artist=undefined) {
                 .filter(function(d) {
                     if(artist) {
                         if (d.name == artist) { return true };
+                        console.log(contact);
                         return contact.includes(d.name);
                     } else {
                         return true;
@@ -96,6 +97,7 @@ function drawGraph(artist=undefined) {
             .attr("fill", function(d) { return color(d.subject.length ? d.subject.length * 10 : 10 ); })
             // add attributes for click-and-filter feature
             .attr("name", function(d) { return d.name })
+            .attr("title", function(d) { return d.title })
             .attr("onclick", "filterArtist(this)")
             .call(d3.drag()
                 .on("start", dragstarted)
@@ -174,9 +176,11 @@ function dragended(d) {
 function filterArtist(e){
     // e is the <circle> SVG element, so use .getAttribute to query.
     name = e.getAttribute("name");
+    title = e.getAttribute("title");
     document.getElementById('artist').innerHTML =
         "<div id='inner'>" +
             "<p>Name: " + name + "</p>" +
+            "<p>Artwork: " + title + "</p>" +
         "</div>";
 
     d3.select("svg").selectAll(".nodes").remove();
