@@ -1,4 +1,4 @@
-# Bubble Wrap: Platform that creates shareable collections from an individual's email corpus. Dynamic arrangement is facilitated through a data visualization element and data science 
+# Bubble Wrap: Platform that creates shareable collections from an individual's email corpus. 
 
 ## Description
 **Entry for the Personal Digital Archiving (PDA) 2017 Hackathon.**
